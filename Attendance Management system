@@ -1,0 +1,242 @@
+#include <iostream>
+#include <string>
+#include <map>
+using namespace std;
+
+// Base class for Person
+class Person {
+protected:
+    string name;
+    string username;
+    string password;
+
+public:
+    Person(string name, string username, string password)
+        : name(name), username(username), password(password) {}
+
+    string getUsername() const {
+        return username;
+    }
+
+    bool checkPassword(string enteredPassword) const {
+        return password == enteredPassword;
+    }
+};
+
+// Derived class for Student
+class Student : public Person {
+private:
+    int rollNo;
+    int attendanceCount;
+
+public:
+    // Default constructor
+    Student() : Person("", "", ""), rollNo(0), attendanceCount(0) {}
+
+    Student(string name, string username, string password, int rollNo)
+        : Person(name, username, password), rollNo(rollNo), attendanceCount(0) {}
+
+    void markAttendance() {
+        attendanceCount++;
+        cout << "Attendance marked for " << name << ". Total Attendance: " << attendanceCount << endl;
+    }
+
+    void checkAttendance() const {
+        cout << name << "'s Attendance: " << attendanceCount << endl;
+    }
+
+    // Getter for rollNo
+    int getRollNo() const {
+        return rollNo;
+    }
+};
+
+// Admin class (no inheritance, admin-specific functionality)
+class Admin {
+private:
+    map<string, Student> studentDatabase;
+
+public:
+    // Function to register a new student
+    void registerStudent(string name, string username, string password, int rollNo) {
+        if (studentDatabase.find(username) == studentDatabase.end()) {
+            Student newStudent(name, username, password, rollNo);
+            studentDatabase[username] = newStudent;
+            cout << "Student " << name << " registered successfully!" << endl;
+        } else {
+            cout << "Username already exists!" << endl;
+        }
+    }
+
+    // Function to list all students
+    void listAllStudents() const {
+        if (studentDatabase.empty()) {
+            cout << "No students registered yet!" << endl;
+            return;
+        }
+        cout << "List of Students:" << endl;
+        for (const auto& pair : studentDatabase) {
+            cout << "Username: " << pair.first << " | Roll No: " << pair.second.getRollNo() << endl;
+        }
+    }
+
+    // Function to delete all students
+    void deleteAllStudents() {
+        studentDatabase.clear();
+        cout << "All students deleted from the system." << endl;
+    }
+
+    // Function to allow a student to login and mark/check attendance
+    Student* studentLogin(string username, string password) {
+        if (studentDatabase.find(username) != studentDatabase.end()) {
+            Student& student = studentDatabase[username];
+            if (student.checkPassword(password)) {
+                cout << "Login successful for " << student.getUsername() << "!" << endl;
+                return &student;
+            } else {
+                cout << "Invalid password!" << endl;
+            }
+        } else {
+            cout << "Student not found!" << endl;
+        }
+        return nullptr;
+    }
+};
+
+// Attendance Management System class
+class AttendanceSystem {
+private:
+    Admin admin;
+    bool running;
+
+public:
+    AttendanceSystem() : running(true) {}
+
+    // Main Menu
+    void showMainMenu() {
+        while (running) {
+            int choice;
+            cout << "\nAttendance Management System Main Menu\n";
+            cout << "1. Admin Login\n";
+            cout << "2. Student Login\n";
+            cout << "0. Exit\n";
+            cout << "Enter your choice: ";
+            cin >> choice;
+
+            switch (choice) {
+            case 1:
+                adminMenu();
+                break;
+            case 2:
+                studentMenu();
+                break;
+            case 0:
+                running = false;
+                cout << "Exiting system. Goodbye!\n";
+                break;
+            default:
+                cout << "Invalid choice. Try again.\n";
+            }
+        }
+    }
+
+    // Admin Menu
+    void adminMenu() {
+        string username, password;
+        cout << "\nAdmin Login\n";
+        cout << "Enter Admin Username: ";
+        cin >> username;
+        cout << "Enter Admin Password: ";
+        cin >> password;
+
+        if (username == "admin" && password == "admin123") {
+            int choice;
+            do {
+                cout << "\nAdmin Menu\n";
+                cout << "1. Register a Student\n";
+                cout << "2. List All Students\n";
+                cout << "3. Delete All Students\n";
+                cout << "0. Go Back\n";
+                cout << "Enter your choice: ";
+                cin >> choice;
+
+                switch (choice) {
+                case 1:
+                    registerStudent();
+                    break;
+                case 2:
+                    admin.listAllStudents();
+                    break;
+                case 3:
+                    admin.deleteAllStudents();
+                    break;
+                case 0:
+                    return;
+                default:
+                    cout << "Invalid choice. Try again.\n";
+                }
+            } while (choice != 0);
+        } else {
+            cout << "Invalid Admin credentials!\n";
+        }
+    }
+
+    // Function to register a student (in Admin Menu)
+    void registerStudent() {
+        string name, username, password;
+        int rollNo;
+        cout << "\nEnter Student Name: ";
+        cin >> name;
+        cout << "Enter Username: ";
+        cin >> username;
+        cout << "Enter Password: ";
+        cin >> password;
+        cout << "Enter Roll No: ";
+        cin >> rollNo;
+
+        admin.registerStudent(name, username, password, rollNo);
+    }
+
+    // Student Menu
+    void studentMenu() {
+        string username, password;
+        cout << "\nStudent Login\n";
+        cout << "Enter Username: ";
+        cin >> username;
+        cout << "Enter Password: ";
+        cin >> password;
+
+        Student* student = admin.studentLogin(username, password);
+        if (student != nullptr) {
+            int choice;
+            do {
+                cout << "\nStudent Menu\n";
+                cout << "1. Mark Attendance\n";
+                cout << "2. Check Attendance\n";
+                cout << "0. Go Back\n";
+                cout << "Enter your choice: ";
+                cin >> choice;
+
+                switch (choice) {
+                case 1:
+                    student->markAttendance();
+                    break;
+                case 2:
+                    student->checkAttendance();
+                    break;
+                case 0:
+                    return;
+                default:
+                    cout << "Invalid choice. Try again.\n";
+                }
+            } while (choice != 0);
+        }
+    }
+};
+
+int main() {
+    AttendanceSystem system;
+    system.showMainMenu();
+
+    return 0;
+}
